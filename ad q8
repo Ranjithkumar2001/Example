@@ -1,41 +1,45 @@
 #include <stdio.h>
 #include <stdlib.h>
  
-// Function to compare for sorting (ascending order)
-int compareAsc(const void *a, const void *b) {
-    return (*(int *)a - *(int *)b);
-}
- 
-// Function to compare for sorting (descending order)
-int compareDesc(const void *a, const void *b) {
-    return (*(int *)b - *(int *)a);
-}
- 
+// // Function to compare for sorting (ascending order)
+// int compareAsc(const void *a, const void *b) {
+//     return (*(int *)a - *(int *)b);
+// }
 
-void constructMatrix(int n, int arr1[], int arr2[], int matrix[][10]) {
-    int index1 = 1, index2 = 1;  // Start after size element
- 
-    for (int i = 0; i < n; i++) {
-        int temp1[n], temp2[n];
- 
-        // Extract partition elements
-        for (int j = 0; j < n; j++) {
-            temp1[j] = arr1[index1++];
-            temp2[j] = arr2[index2++];
+void compareAsc(int *selected,int n){
+      for(int i = 0; i<n;i++){
+                for(int j = i+1;j<n;j++){
+                    if(selected[i] > selected[j]){
+                        int tmp = selected[i];
+                        selected[i] = selected[j];
+                        selected[j] = tmp;
+                    }
+                    
+                }
         }
- 
-        // Sort temp1 in ascending order
-        qsort(temp1, n, sizeof(int), compareAsc);
-        // Sort temp2 in descending order
-        qsort(temp2, n, sizeof(int), compareDesc);
- 
-        // Construct row
-        for (int j = 0; j < n; j++) {
-            matrix[i][j] = temp1[j] + temp2[j];
-        }
-    }
 }
+void compareDesc(int *selected,int n){
+      for(int i = 0; i<n;i++){
+                for(int j = i+1;j<n;j++){
+                    if(selected[i] > selected[j]){
+                        int tmp = selected[i];
+                        selected[i] = selected[j];
+                        selected[j] = tmp;
+                    }
+                    
+                }
+        }
+}
+
+
+
+
+
  
+// // Function to compare for sorting (descending order)
+// int compareDesc(const void *a, const void *b) {
+//     return (*(int *)b - *(int *)a);
+// }
 
 void verticalFold(int n, int matrix[][10]) {
     int mid = n / 2;
@@ -57,6 +61,34 @@ void horizontalFold(int n, int matrix[][10]) {
         }
     }
 }
+
+ 
+
+void constructMatrix(int n, int arr1[], int arr2[], int matrix[][10]) {
+    int index1 = 1, index2 = 1;  // Start after size element
+ 
+    for (int i = 0; i < n; i++) {
+        int temp1[n], temp2[n];
+ 
+        // Extract partition elements
+        for (int j = 0; j < n; j++) {
+            temp1[j] = arr1[index1++];
+            temp2[j] = arr2[index2++];
+        }
+        
+        compareAsc(temp1, n);
+        compareDesc(temp2,n);
+        
+        for (int j = 0; j < n; j++) {
+            matrix[i][j] = temp1[j] + temp2[j];
+        }
+    }
+    
+    verticalFold(n, matrix);
+    horizontalFold(n, matrix);
+}
+ 
+
  
 
 void printMatrix(int n, int matrix[][10]) {
@@ -77,8 +109,8 @@ int main() {
     int matrix[10][10] = {0}; 
  
     constructMatrix(n, arr1, arr2, matrix);
-    verticalFold(n, matrix);
-    horizontalFold(n, matrix);
+    // verticalFold(n, matrix);
+    // horizontalFold(n, matrix);
  
     printf("Final Matrix:\n");
     printMatrix(n, matrix);
