@@ -1,12 +1,42 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
- 
-// Function to compare integers for qsort (descending order)
-int compare(const void *a, const void *b) {
-    return (*(int *)b - *(int *)a);
+
+
+
+void add(int *tempArr,int *selected,int selectedCount,int n){
+     for(int i = 0; i<n;i++){
+            if (selectedCount < n) {
+                for(int i = 0; i<n*2;i++){
+                    for(int j = i+1;j<n*2;j++){
+                        if(tempArr[i] > tempArr[j]){
+                            int tmp = tempArr[i];
+                            tempArr[i] = tempArr[j];
+                            tempArr[j] = tmp;
+                        }
+                        
+                    }
+                }
+                selected[selectedCount] = tempArr[selectedCount+1];
+                selectedCount++;
+            }
+        }
 }
- 
+
+void sortarr(int *selected,int n){
+    
+  for(int i = 0; i<n;i++){
+            for(int j = i+1;j<n;j++){
+                if(selected[i] > selected[j]){
+                    int tmp = selected[i];
+                    selected[i] = selected[j];
+                    selected[j] = tmp;
+                }
+                
+            }
+    }
+}
+
 
 void processAdminDroidArrays(int arr1[], int arr2[], int size) {
     
@@ -40,36 +70,38 @@ void processAdminDroidArrays(int arr1[], int arr2[], int size) {
                 selected[selectedCount++] = tempArr[j];
             }
         }
+        
+        add(tempArr,selected,selectedCount,n);
  
-        for(int i = 0; i<n;i++){
-              if (selectedCount < n) {
-                for(int i = 0; i<n*2;i++){
-                    for(int j = i+1;j<n*2;j++){
-                        if(tempArr[i] > tempArr[j]){
-                            int tmp = tempArr[i];
-                            tempArr[i] = tempArr[j];
-                            tempArr[j] = tmp;
-                        }
+        // for(int i = 0; i<n;i++){
+        //     if (selectedCount < n) {
+        //         for(int i = 0; i<n*2;i++){
+        //             for(int j = i+1;j<n*2;j++){
+        //                 if(tempArr[i] > tempArr[j]){
+        //                     int tmp = tempArr[i];
+        //                     tempArr[i] = tempArr[j];
+        //                     tempArr[j] = tmp;
+        //                 }
                         
-                    }
-                }
-                selected[selectedCount] = tempArr[selectedCount+1];
-                selectedCount++;
-            }
-        }
+        //             }
+        //         }
+        //         selected[selectedCount] = tempArr[selectedCount+1];
+        //         selectedCount++;
+        //     }
+        // }
 
        
-        
-        for(int i = 0; i<n;i++){
-            for(int j = i+1;j<n;j++){
-                if(selected[i] > selected[j]){
-                    int tmp = selected[i];
-                    selected[i] = selected[j];
-                    selected[j] = tmp;
-                }
+        sortarr(selected,n);
+        // for(int i = 0; i<n;i++){
+        //     for(int j = i+1;j<n;j++){
+        //         if(selected[i] > selected[j]){
+        //             int tmp = selected[i];
+        //             selected[i] = selected[j];
+        //             selected[j] = tmp;
+        //         }
                 
-            }
-        }
+        //     }
+        // }
  
         for (int j = 0; j < n; j++) {
             output[i][j] = selected[j];
