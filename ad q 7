@@ -40,7 +40,7 @@ void sortarr(int *selected,int n){
 
 void processAdminDroidArrays(int arr1[], int arr2[], int size) {
     
-    int n = 3;//sqrt_root(arr[0]); 
+    int n = 2;//sqrt_root(arr[0]); 
     
     
     int output[n][n];
@@ -72,36 +72,8 @@ void processAdminDroidArrays(int arr1[], int arr2[], int size) {
         }
         
         add(tempArr,selected,selectedCount,n);
- 
-        // for(int i = 0; i<n;i++){
-        //     if (selectedCount < n) {
-        //         for(int i = 0; i<n*2;i++){
-        //             for(int j = i+1;j<n*2;j++){
-        //                 if(tempArr[i] > tempArr[j]){
-        //                     int tmp = tempArr[i];
-        //                     tempArr[i] = tempArr[j];
-        //                     tempArr[j] = tmp;
-        //                 }
-                        
-        //             }
-        //         }
-        //         selected[selectedCount] = tempArr[selectedCount+1];
-        //         selectedCount++;
-        //     }
-        // }
-
        
         sortarr(selected,n);
-        // for(int i = 0; i<n;i++){
-        //     for(int j = i+1;j<n;j++){
-        //         if(selected[i] > selected[j]){
-        //             int tmp = selected[i];
-        //             selected[i] = selected[j];
-        //             selected[j] = tmp;
-        //         }
-                
-        //     }
-        // }
  
         for (int j = 0; j < n; j++) {
             output[i][j] = selected[j];
@@ -120,8 +92,8 @@ void processAdminDroidArrays(int arr1[], int arr2[], int size) {
 }
  
 int main() {
-    int arr1[] = {9, 8, 11, 7, 4, 3, 10, 2, 7, 6};
-    int arr2[] = {9, 4, 6, 9, 2, 1, 8, 13, 1, 5};
+    int arr1[] = {4,3,8,1,9};//{9, 8, 11, 7, 4, 3, 10, 2, 7, 6};
+    int arr2[] = {4,7,2,10,4};//{9, 4, 6, 9, 2, 1, 8, 13, 1, 5};
  
     int size =arr1[0];
  
