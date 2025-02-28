@@ -1,0 +1,161 @@
+#include <stdio.h>
+int sqroot(int n) {
+	for(int i=0; i<=n/2; i++) {
+		if(i*i == n) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+void sort_arr(int *a,int size) {
+	for(int i=0; i<size; i++ ) {
+		for(int j=i+1; j<size; j++) {
+			if(a[i]<a[j]) {
+				int temp = a[i];
+				a[i] = a[j];
+				a[j] = temp;
+			}
+		}
+	}
+}
+
+void right_shift(int *a, int size, int shifts) {
+    while (shifts--) {
+        int temp = a[size - 1];
+        for (int i = size - 1; i > 0; i--) {
+            a[i] = a[i - 1];
+        }
+        a[0] = temp;
+    }
+}
+
+void output(int a[][100],int size);
+
+int main()
+{
+	int arr1[] = {9,23,47,89,12,56,34,78,91,17};
+
+	int size = 3;
+	
+	int ptn[9],st[9],sft[9];
+	
+    int fnl[9],fnll[9],ct =1;
+
+	int sftv =0;
+	int outt[100][100];
+
+	for(int i=1; i<=arr1[0]; i=i+size) {
+		int a[20];
+		for(int j=0; j<size; j++) {
+			a[j]=arr1[j+i];
+		}
+		sort_arr(a,size);
+		
+		for(int j=0; j<size; j++) {
+			st[j+i]=a[j];
+		}
+	}
+	
+	
+	printf("sort:\n");
+	for(int i=1; i<=9; i++ ) {
+		printf("%d\t",st[i]);
+	}
+	
+	for(int i=1; i<=size; i++ ) {
+		for(int j=i; j<=9; j = j+size) {
+			ptn[ct++]=st[j];
+		}
+	}
+	printf("patten:\n");
+	
+	for(int i=1; i<=9; i++ ) {
+		printf("%d\t",ptn[i]);
+	}
+	
+		for(int i=1; i<=arr1[0]; i=i+size) {
+		int a[20];
+		for(int j=0; j<size; j++) {
+			a[j]=ptn[j+i];
+		}
+		sort_arr(a,size);
+		
+		for(int j=0; j<size; j++) {
+			sft[j+i]=a[j];
+		}
+	}
+	
+	printf("patten sort:\n");
+		for(int i=1; i<=9; i++ ) {
+		printf("%d\t",sft[i]);
+	}
+	
+	for(int i=1; i<=arr1[0]; i=i+size) {
+		int a[20];
+		for(int j=0; j<size; j++) {
+			a[j]=sft[j+i];
+		}
+		right_shift(a,size,sftv++);
+		for(int j=0; j<size; j++) {
+			fnl[j+i]=a[j];
+		}
+	}
+
+	
+		printf("\n");
+	
+		for(int i=1; i<=9; i++ ) {
+		printf("%d\t",fnl[i]);
+	}
+	
+	
+	ct = 1;
+	for(int i=1;i<=9;i=i+3){
+	    for(int j=0;j<3;j++){
+	        outt[i/3][j]=fnl[ct++];
+	    }
+	}
+	
+	
+	output(outt,size);
+	
+	
+
+// 	for(int i=0; i<size; i++ ) {
+// 		printf("%d\t",diff[i]);
+// 	}
+
+// 	printf("\n\n");
+
+// 	for(int i=0; i<size; i++ ) {
+// 		for(int j=i+1; j<size; j++) {
+// 			if(diff[i] < diff[j]) {
+// 				int temp;
+// 				for(int sub = 0; sub<size ; sub++) {
+// 					temp = arr[i][sub];
+// 					arr[i][sub] = arr[j][sub];
+// 					arr[j][sub] = temp;
+// 				}
+// 				temp = diff[i];
+// 				diff[i] = diff[j];
+// 				diff[j] = temp;
+// 			}
+// 		}
+// 	}
+	
+// 	output(arr,size);
+
+	return 0;
+}
+
+
+void output(int a[][100],int size){
+        printf("\nOutput:\n");
+    	for(int i=0; i<size; i++ ) {
+		for(int j=0; j<size; j++) {
+			printf("%d\t",a[i][j]);
+		}
+		printf("\n");
+	}
+}
