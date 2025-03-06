@@ -1,9 +1,9 @@
-
-long totalDamage = 0;
-        int maxHit = 0;
- 
-        for (int p : power) {
-            totalDamage += p;
-            maxHit = Math.max(maxHit, p);
+Arrays.sort(host_throughput); 
+        int n = host_throughput.length;
+        long maxThroughput = 0;
+        
+        for (int i = n - 2; i >= 1; i -= 3) {
+            maxThroughput += host_throughput[i]; 
         }
-        return totalDamage - Math.min(maxHit, armor) + 1;
+ 
+        return maxThroughput;
