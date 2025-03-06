@@ -1,1 +1,9 @@
 
+long totalDamage = 0;
+        int maxHit = 0;
+ 
+        for (int p : power) {
+            totalDamage += p;
+            maxHit = Math.max(maxHit, p);
+        }
+        return totalDamage - Math.min(maxHit, armor) + 1;
