@@ -1,0 +1,55 @@
+const puppeteer = require('puppeteer');
+const lighthouse = require('lighthouse');
+const { URL } = require('url');
+const fs = require('fs');
+const path = require('path');
+
+async function runLighthouse(url, flowName) {
+  const browser = await puppeteer.launch({ headless: false, defaultViewport: null });
+  const page = await browser.newPage();
+  
+  // Start the Lighthouse audit using Puppeteer
+  const { lhr } = await lighthouse(url, {
+    port: (new URL(browser.wsEndpoint())).port,
+    output: 'html',
+    onlyCategories: ['performance', 'seo', 'accessibility', 'best-practices'],
+  });
+
+  // Save the Lighthouse report to an HTML file
+  const filePath = path.join(__dirname, `${flowName}_report.html`);
+  fs.writeFileSync(filePath, lhr.report);
+
+  console.log(`Lighthouse report for ${flowName} saved to: ${filePath}`);
+
+  // Close the browser after the audit
+  await browser.close();
+}
+
+async function runFlows() {
+  const browser = await puppeteer.launch({ headless: false, defaultViewport: null });
+  const page = await browser.newPage();
+
+  // 1. Login Flow
+  await page.goto('https://your-site.com/login');
+  await page.type('#username', 'yourUsername');
+  await page.type('#password', 'yourPassword');
+  await page.click('#submit-login');
+  await page.waitForNavigation();
+  await runLighthouse(page.url(), 'Login');  // Run Lighthouse after login
+
+  // 2. Cart Flow
+  await page.goto('https://your-site.com/products');
+  await page.click('.add-to-cart-button');
+  await page.goto('https://your-site.com/cart');
+  await runLighthouse(page.url(), 'Cart');  // Run Lighthouse after adding to cart
+
+  // 3. Checkout Flow
+  await page.goto('https://your-site.com/checkout');
+  await runLighthouse(page.url(), 'Checkout');  // Run Lighthouse after checkout page
+
+  // Close the browser after completing all flows
+  await browser.close();
+}
+
+runFlows().catch(console.error);
+ 
