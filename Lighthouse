@@ -1,0 +1,68 @@
+import subprocess
+import time
+from playwright.sync_api import sync_playwright
+
+# URLs and flow steps
+flows = [
+    {"name": "Login", "url": "https://your-site.com/login"},
+    {"name": "Cart", "url": "https://your-site.com/cart"},
+    {"name": "Checkout", "url": "https://your-site.com/checkout"}
+]
+
+# Actions for each flow step
+def login_action(page):
+    page.fill("#username", "yourUsername")
+    page.fill("#password", "yourPassword")
+    page.click("#submit-login")
+    page.wait_for_load_state("networkidle")
+
+def cart_action(page):
+    page.goto("https://your-site.com/products")
+    page.click(".add-to-cart-button")
+    page.goto("https://your-site.com/cart")
+    page.wait_for_load_state("networkidle")
+
+def checkout_action(page):
+    page.goto("https://your-site.com/checkout")
+    page.wait_for_load_state("networkidle")
+
+actions = {
+    "Login": login_action,
+    "Cart": cart_action,
+    "Checkout": checkout_action
+}
+
+def run_lighthouse(url, step_name):
+    print(f"\n📊 Running Lighthouse for: {step_name} → {url}")
+    subprocess.run([
+        "lighthouse", url,
+        "--port=9222",
+        "--output", "html",
+        "--output-path", f"{step_name}_report.html",
+        "--only-categories=performance,accessibility,seo",
+        "--quiet"
+    ])
+
+def main():
+    with sync_playwright() as p:
+        # Launch with remote debugging
+        browser = p.chromium.launch(headless=False, args=["--remote-debugging-port=9222"])
+        page = browser.new_page()
+
+        for flow in flows:
+            print(f"\n🚀 Running step: {flow['name']}")
+
+            # Navigate to initial URL
+            page.goto(flow["url"])
+            time.sleep(1)  # wait to avoid race conditions
+
+            # Perform page-specific actions
+            actions[flow["name"]](page)
+
+            # Run Lighthouse report on current URL
+            run_lighthouse(page.url, flow["name"])
+
+        browser.close()
+
+if __name__ == "__main__":
+    main()
