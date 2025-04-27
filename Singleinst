@@ -1,0 +1,107 @@
+const puppeteer = require('puppeteer');
+const { exec } = require('child_process');
+const fs = require('fs').promises;
+
+async function runFlowWithInteractions(browser, flowName, steps) {
+  const page = await browser.newPage(); // Open a new page for each flow
+
+  const reports = {};
+
+  for (const [stepName, stepDetails] of Object.entries(steps)) {
+    const { url, actions } = stepDetails;
+
+    console.log(`Navigating to ${url} for step: ${stepName} in flow: ${flowName}`);
+    await page.goto(url, { waitUntil: 'networkidle0' });
+
+    if (actions && Array.isArray(actions)) {
+      console.log(`Performing actions for step: ${stepName}`);
+      for (const action of actions) {
+        if (action.type === 'click' && action.selector) {
+          await page.click(action.selector);
+          await page.waitForNavigation({ waitUntil: 'networkidle0' });
+        } else if (action.type === 'type' && action.selector && action.text) {
+          await page.type(action.selector, action.text);
+        } else if (action.type === 'select' && action.selector && action.value) {
+          await page.select(action.selector, action.value);
+        }
+        // Add more action types as needed
+      }
+    }
+
+    const reportPath = `reports/${flowName}/${stepName}.json`;
+    await fs.mkdir(`reports/${flowName}`, { recursive: true });
+
+    const command = `npx lighthouse ${page.url()} --output json --output-path ${reportPath}`;
+
+    console.log(`Running Lighthouse for ${page.url()} after interactions`);
+    await new Promise((resolve) => {
+      exec(command, (error, stdout, stderr) => {
+        if (error) {
+          console.error(`Error running Lighthouse: ${error}`);
+        }
+        resolve();
+      });
+    });
+
+    const report = JSON.parse(await fs.readFile(reportPath, 'utf8'));
+    reports[stepName] = report;
+  }
+
+  await page.close(); // Close the page after the flow is complete
+  console.log(`Finished flow with interactions: ${flowName}`);
+  return reports;
+}
+
+async function main() {
+  const browser = await puppeteer.launch(); // Launch the browser once
+
+  const flowsToAnalyze = {
+    'search-flow': {
+      'homepage': {
+        url: 'https://www.example.com/',
+        actions: [
+          { type: 'click', selector: '#search-button' },
+          { type: 'type', selector: '#search-input', text: 'product name' },
+          { type: 'click', selector: '#submit-search' },
+        ],
+      },
+      'search-results': {
+        url: 'about:blank', // The URL will change after the search
+      },
+      'product-page': {
+        url: 'about:blank', // Will navigate here after clicking a result
+        actions: [
+          { type: 'click', selector: '.product-link:first-child' },
+        ],
+      },
+    },
+    'login-flow': {
+      'login-page': {
+        url: 'https://www.example.com/login',
+        actions: [
+          { type: 'type', selector: '#username', text: 'testuser' },
+          { type: 'type', selector: '#password', text: 'password123' },
+          { type: 'click', selector: '#login-button' },
+        ],
+      },
+      'dashboard': {
+        url: 'about:blank', // URL after login
+      },
+    },
+  };
+
+  const allFlowReports = {};
+
+  for (const [flowName, steps] of Object.entries(flowsToAnalyze)) {
+    console.log(`Starting analysis for flow: ${flowName}`);
+    const flowReports = await runFlowWithInteractions(browser, flowName, steps);
+    allFlowReports[flowName] = flowReports;
+    console.log(`Completed analysis for flow: ${flowName}`);
+  }
+
+  await browser.close(); // Close the browser after all flows are analyzed
+  console.log('All flows analyzed. Reports available in the "reports" directory.');
+  console.log('Final Reports:', allFlowReports); // You can process these reports further
+}
+
+main();
