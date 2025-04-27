@@ -1,0 +1,58 @@
+const puppeteer = require('puppeteer');
+const { exec } = require('child_process');
+const fs = require('fs').promises;
+
+async function runFlow(flowName, steps) {
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+
+  const reports = {};
+
+  for (const [stepName, url] of Object.entries(steps)) {
+    console.log(`Navigating to ${url} for step: ${stepName} in flow: ${flowName}`);
+    await page.goto(url, { waitUntil: 'networkidle0' }); // Wait for the page to load
+
+    const reportPath = `reports/${flowName}/${stepName}.json`;
+    await fs.mkdir(`reports/${flowName}`, { recursive: true });
+
+    const command = `npx lighthouse ${page.url()} --output json --output-path ${reportPath}`;
+
+    console.log(`Running Lighthouse for ${page.url()}`);
+    await new Promise((resolve) => {
+      exec(command, (error, stdout, stderr) => {
+        if (error) {
+          console.error(`Error running Lighthouse: ${error}`);
+        }
+        resolve();
+      });
+    });
+
+    const report = JSON.parse(await fs.readFile(reportPath, 'utf8'));
+    reports[stepName] = report;
+  }
+
+  await browser.close();
+  console.log(`Finished flow: ${flowName}`);
+  return reports;
+}
+
+async function main() {
+  const flowsToAnalyze = {
+    'homepage-to-product': {
+      'homepage': 'https://www.example.com/',
+      'product-page': 'https://www.example.com/products/123',
+    },
+    'login-flow': {
+      'login-page': 'https://www.example.com/login',
+      'dashboard': 'https://www.example.com/dashboard',
+    },
+  };
+
+  for (const [flowName, steps] of Object.entries(flowsToAnalyze)) {
+    const flowReports = await runFlow(flowName, steps);
+    // You can now process and analyze the flowReports
+    console.log(`Reports for flow ${flowName}:`, flowReports);
+  }
+}
+
+main();
