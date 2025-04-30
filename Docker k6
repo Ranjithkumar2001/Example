@@ -1,0 +1,6 @@
+podman run --rm -it \
+  -u "$(id -u):$(id -g)" \
+  -v "$(pwd):/xk6" \
+  -w /xk6 \
+  docker.io/grafana/xk6 build v0.45.1 \
+  --with github.com/mostafa/xk6-sftp
