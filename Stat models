@@ -1,0 +1,286 @@
+import pandas as pd
+import numpy as np
+from statsmodels.tsa.api import SimpleExpSmoothing
+from statsmodels.tsa.seasonal import seasonal_decompose
+from statsmodels.tsa.arima.model import ARIMA
+import pmdarima as pm # Auto-ARIMA for parameter selection
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+from sklearn.preprocessing import StandardScaler # Useful if using multiple features with different scales
+
+# Raw historical data provided by the user
+raw_data = """
+2025-03-10: 85.76
+2025-03-11: 80.14
+2025-03-12: 77.24
+2025-03-13: 71.18
+2025-03-14: 82.29
+2025-03-15: 71.88
+2025-03-16: 94.59
+2025-03-17: 98.18
+昭
+2025-03-18: 69.17
+2025-03-19: 89.59
+2025-03-20: 76.44
+A
+2015-03-21: 78.40
+2025-03-22: 96.28
+2025-03-23:53.55
+2025-03-24: 54.36
+2025-03-25:51.01
+2025-03-26: 91.63
+2025-03-27: 88.91
+2025-03-28: 93.50
+2025-03-29: 98.93
+2825-03-30: 89.96
+2025-03-31: 73.07
+2025-04-01: 89.03
+2025-04-02: 55.91
+2025-04-03: 82.00
+2025-04-04: 57.17
+2025-04-05: 97.23
+2825-04-06: 76.09
+2825-04-07: 70.73
+2825-04-08: 63.23
+2025-04-09: 88.71
+2025-04-10: 72.81
+2025-04-11: 78.42
+2025-04-12:50.94
+2025-04-13: 80.88
+2025-04-14: 80.60
+2025-04-15: 80.85
+2025-04-16: 97.19
+2825-04-17: 84.09
+2025-04-18: 67.98
+2025-04-19: 71.85
+2025-04-20: 84.88
+2825-04-21:53.01
+2025-04-22: 83.34
+2025-04-23: 83.53
+2025-04-24: 60.52
+2025-04-25:56.45
+2025-04-26: 65.77
+2015-04-27 68.19
+2825-04-28: 78.51
+2015-04-29: 71.93
+2015-04-30: 99.42
+2025-05-01:55.16
+2025-05-02: 60.44
+"""
+
+# --- Data Cleaning and Preparation ---
+data_lines = raw_data.strip().split('\n')
+cleaned_data = []
+
+for line in data_lines:
+    # Remove extra characters
+    line = line.replace('昭', '').replace('A', '').strip()
+    if not line:
+        continue
+
+    # Handle lines with incorrect year or missing colon
+    try:
+        if ': ' in line:
+            date_str, value_str = line.split(': ')
+        elif ' ' in line and line.count('-') == 2: # Handle "YYYY-MM-DD Value" format
+             date_str, value_str = line.split(' ')
+        else:
+            # Skip lines that don't match expected formats
+            # print(f"Skipping line due to unexpected format: {line}") # Uncomment to see skipped lines
+            continue
+
+        # Correct incorrect years (2825, 2015 to 2025)
+        date_str = date_str.replace('2825', '2025').replace('2015', '2025')
+
+        # Correct values missing a digit (e.g., 53.55)
+        if value_str.startswith('.'):
+             value_str = '0' + value_str
+
+        date = pd.to_datetime(date_str)
+        value = float(value_str)
+        cleaned_data.append((date, value))
+    except (ValueError, IndexError) as e:
+        # print(f"Skipping line due to parsing error: {line} - {e}") # Uncomment to see parsing errors
+        continue
+
+# Create a pandas Series with Date index
+ts_data = pd.Series([value for date, value in cleaned_data], index=[date for date, value in cleaned_data])
+ts_data = ts_data.sort_index() # Ensure data is sorted by date
+
+print("--- Historical Data (Cleaned) ---")
+print(ts_data)
+print("-" * 30)
+
+# --- Define Forecast Horizon ---
+forecast_horizon = 7 # Number of days to forecast into the future
+
+# --- Forecasting Methods ---
+
+# 1. Simple Average Forecast
+simple_average_forecast_values = np.full(forecast_horizon, ts_data.mean())
+simple_average_forecast_dates = pd.date_range(start=ts_data.index[-1] + pd.Timedelta(days=1), periods=forecast_horizon)
+simple_average_forecast = pd.Series(simple_average_forecast_values, index=simple_average_forecast_dates)
+
+# 2. Naive Forecast (Last Value)
+naive_forecast_values = np.full(forecast_horizon, ts_data.iloc[-1])
+naive_forecast_dates = pd.date_range(start=ts_data.index[-1] + pd.Timedelta(days=1), periods=forecast_horizon)
+naive_forecast = pd.Series(naive_forecast_values, index=naive_forecast_dates)
+
+# 3. Moving Average Forecast (using a 7-day window)
+# Calculate rolling mean on historical data
+rolling_mean = ts_data.rolling(window=7).mean()
+# The forecast is the last calculated moving average
+if not rolling_mean.empty and not np.isnan(rolling_mean.iloc[-1]):
+    moving_average_forecast_value = rolling_mean.iloc[-1]
+    moving_average_forecast_values = np.full(forecast_horizon, moving_average_forecast_value)
+else:
+    moving_average_forecast_values = np.full(forecast_horizon, np.nan)
+    print("Warning: Not enough data for a 7-day moving average forecast. Using NaN.")
+
+moving_average_forecast_dates = pd.date_range(start=ts_data.index[-1] + pd.Timedelta(days=1), periods=forecast_horizon)
+moving_average_forecast = pd.Series(moving_average_forecast_values, index=moving_average_forecast_dates)
+
+
+# 4. Simple Exponential Smoothing Forecast
+try:
+    ses_model = SimpleExpSmoothing(ts_data)
+    # Use optimize=True to let the model find the best smoothing level (alpha)
+    ses_fit = ses_model.fit(optimize_alpha=True)
+    ses_forecast = ses_fit.forecast(forecast_horizon)
+except Exception as e:
+    print(f"Error fitting Simple Exponential Smoothing model: {e}")
+    ses_forecast = pd.Series(np.full(forecast_horizon, np.nan), index=pd.date_range(start=ts_data.index[-1] + pd.Timedelta(days=1), periods=forecast_horizon))
+
+
+# 5. Time Series Decomposition
+# Note: Decomposition is for analysis, not direct forecasting. We'll show the components.
+# The seasonal period is hard to determine with limited data, assuming none or a short one like 7 days if daily data.
+# Let's try additive decomposition assuming no specific strong seasonality for now.
+try:
+    decomposition = seasonal_decompose(ts_data, model='additive', period=1) # Period=1 means no seasonality component is extracted
+    print("\n--- Time Series Decomposition (Additive, Period=1) ---")
+    print("Trend Component:")
+    print(decomposition.trend.dropna().round(2)) # Drop NaNs at start/end
+    print("\nSeasonal Component:")
+    print(decomposition.seasonal.round(2))
+    print("\nResidual Component:")
+    print(decomposition.resid.dropna().round(2)) # Drop NaNs at start/end
+    print("-" * 30)
+except Exception as e:
+    print(f"\nError performing Time Series Decomposition: {e}")
+    print("-" * 30)
+
+
+# 6. Regression Model (Time as Feature)
+# Create a numerical time index
+time_index = np.arange(len(ts_data)).reshape(-1, 1)
+values = ts_data.values
+
+# Fit a linear regression model
+regression_model = LinearRegression()
+regression_model.fit(time_index, values)
+
+# Generate future time index
+future_time_index = np.arange(len(ts_data), len(ts_data) + forecast_horizon).reshape(-1, 1)
+
+# Predict future values
+regression_forecast_values = regression_model.predict(future_time_index)
+regression_forecast_dates = pd.date_range(start=ts_data.index[-1] + pd.Timedelta(days=1), periods=forecast_horizon)
+regression_forecast = pd.Series(regression_forecast_values, index=regression_forecast_dates)
+
+
+# 7. ARIMA Model (using auto_arima for parameter selection)
+# Auto-ARIMA finds the best (p,d,q) parameters based on AIC, BIC, etc.
+# Due to limited data, auto_arima might select simple parameters or fail.
+try:
+    print("\n--- Running Auto-ARIMA to find best parameters ---")
+    # suppress_warnings=True to hide convergence warnings common with small datasets
+    # seasonal=False because seasonality is hard to determine with this data length
+    arima_auto_model = pm.auto_arima(ts_data, seasonal=False, suppress_warnings=True, error_action='ignore')
+    print("Auto-ARIMA Best Parameters:", arima_auto_model.order)
+
+    # Fit the ARIMA model with the selected parameters
+    arima_model = ARIMA(ts_data, order=arima_auto_model.order)
+    arima_fit = arima_model.fit()
+
+    # Generate forecast
+    arima_forecast = arima_fit.forecast(steps=forecast_horizon)
+    arima_forecast.index = pd.date_range(start=ts_data.index[-1] + pd.Timedelta(days=1), periods=forecast_horizon) # Align index
+except Exception as e:
+    print(f"Error fitting ARIMA model (or auto_arima failed): {e}")
+    arima_forecast = pd.Series(np.full(forecast_horizon, np.nan), index=pd.date_range(start=ts_data.index[-1] + pd.Timedelta(days=1), periods=forecast_horizon))
+
+
+# 8. Machine Learning Regression (using Lagged Features)
+# Create lagged features: use previous day's value to predict the next day's value
+lag = 1
+df = pd.DataFrame(ts_data)
+df.columns = ['value']
+df['value_lagged_1'] = df['value'].shift(lag)
+df.dropna(inplace=True) # Remove rows with NaN created by lagging
+
+if len(df) > lag: # Ensure we have enough data after dropping NaNs
+    X = df[['value_lagged_1']]
+    y = df['value']
+
+    # Train the model on all available data (for demo purposes)
+    ml_regression_model = LinearRegression()
+    ml_regression_model.fit(X, y)
+
+    # Generate forecast - requires predicting one step at a time and using the prediction as the next input
+    ml_regression_forecast_values = []
+    last_value = ts_data.iloc[-1] # Start prediction from the last known value
+
+    for _ in range(forecast_horizon):
+        # Predict the next value based on the last predicted/known value
+        next_value_pred = ml_regression_model.predict([[last_value]])[0]
+        ml_regression_forecast_values.append(next_value_pred)
+        last_value = next_value_pred # Use the prediction as the input for the next step
+
+    ml_regression_forecast_dates = pd.date_range(start=ts_data.index[-1] + pd.Timedelta(days=1), periods=forecast_horizon)
+    ml_regression_forecast = pd.Series(ml_regression_forecast_values, index=ml_regression_forecast_dates)
+
+else:
+    print("\nWarning: Not enough data to create lagged features for ML Regression.")
+    ml_regression_forecast = pd.Series(np.full(forecast_horizon, np.nan), index=pd.date_range(start=ts_data.index[-1] + pd.Timedelta(days=1), periods=forecast_horizon))
+
+
+# --- Print Forecasts ---
+
+print("\n--- Forecasts for the next", forecast_horizon, "days ---")
+
+print("\n1. Simple Average Forecast:")
+print(simple_average_forecast.round(2))
+
+print("\n2. Naive Forecast (Last Value):")
+print(naive_forecast.round(2))
+
+print("\n3. Moving Average Forecast (7-day window):")
+if not np.isnan(moving_average_forecast).all():
+    print(moving_average_forecast.round(2))
+else:
+     print("Could not compute Moving Average forecast.")
+
+print("\n4. Simple Exponential Smoothing Forecast:")
+if not np.isnan(ses_forecast).all():
+    print(ses_forecast.round(2))
+else:
+    print("Could not compute Simple Exponential Smoothing forecast.")
+
+print("\n6. Regression Model (Time as Feature) Forecast:")
+print(regression_forecast.round(2))
+
+print("\n7. ARIMA Model Forecast:")
+if not np.isnan(arima_forecast).all():
+    print(arima_forecast.round(2))
+else:
+     print("Could not compute ARIMA forecast.")
+
+print("\n8. Machine Learning Regression (Lagged Features) Forecast:")
+if not np.isnan(ml_regression_forecast).all():
+    print(ml_regression_forecast.round(2))
+else:
+    print("Could not compute ML Regression (Lagged Features) forecast.")
+
+print("-" * 30)
