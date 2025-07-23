@@ -1,1 +1,68 @@
-dfghjk
+Ranjithkumar S
+Performance Engineer		Chennai - 600097
+Ranjithkumar60304@gmail.com
++91 9095262594
+
+Profile
+ 
+Motivated and adaptable Performance Test Engineer with 2 years of experience in designing, executing, and analysing performance tests covering web applications and API. Skilled with JMeter, k6, LoadRunner (basic), and experienced in building automation and Generative AI solutions to accelerate performance analysis and script creation. Strong programming background in Python, JavaScript, Java and practical experience with Docker, Kubernetes basics.
+Experience
+ 
+Cognizant Technology Solutions	Dec 2023 – Present
+Programmer Analyst
+Client: Dollar General - US leading retail client
+Tools Used:	JMeter, K6
+Protocols Used:                                         HTTP/HTTPS (API), Kafka Messaging Streams Publish/Subscribe
+APM Tools:                                                 Grafana, Dynatrace
+Technology Used & Database:               JavaScript, Elastic Search.
+Key Performance Contributions
+ 
+•	Designed and executed 20+ performance test scripts for APIs, Pub/Sub, UI, and Kafka using K6 and JMeter.
+•	Led 50+ load tests, including spike, endurance, and stress tests, simulating 15K+ concurrent users.
+•	Identified bottlenecks and improved system scalability through detailed performance analysis.
+•	Monitored and analysed metrics using Grafana, Dynatrace.
+•	Performed root cause analysis (RCA) to detect and resolve performance issues.
+•	Created custom utilities to generate custom k6 scripts directly from HAR files
+•	Implemented Python-based RabbitMQ message producer for load generation, with configurable ramp-up, steady state, ramp-down, and multithreaded execution.
+•	Created UI automation flows using Selenium and Playwright for collecting client-side response time of web application.
+•	Built a GenAI agentic chatbot for test execution, result interpretation in natural language, and script creation.
+•	Developed GenAI-based performance analysis automation for rapid post-test insights
+Education
+ 
+Dr.Mahalingam College of Engineering and Technology | B. Tech – Information Technology	2019 – 2023
+CGPA: 8.97
+Skills
+ 
+Performance Testing Tools:
+•	Apache JMeter, k6, LoadRunner(basic)
+API & UI Testing:
+•	Postman, Selenium, Playwright
+Programming & Scripting:
+•	Java, Python, JavaScript, C, PowerShell, Bash 
+•	Frontend basics: HTML, CSS, JavaScript
+Monitoring & Analysis:
+•	Grafana, Dynatrace 
+OS and Others:
+•	Windows, Linux.
+•	Docker, Kubernetes (basics), Cloud basics.
+Soft Skills:
+•	Teamwork & Cross-functional Collaboration
+•	Efficient Time Management & Prioritization
+•	Analytical Thinking & Problem-Solving
+•	Communication & Adaptability
+
+Awards
+ 
+•	Client appreciation for har to k6 converter utility creation.
+
+Core Competencies
+ 
+•	Load, Stress & Endurance Testing
+•	Generative AI Automation for Performance Analysis
+•	HAR-to-Script Automation Utilities
+•	API & Functional Automation (Selenium, Playwright)
+•	Monitoring & Tuning (Grafana, Dynatrace)
+•	Scripting & Utilities in Java, Python, JS, PowerShell, Bash
+•	Containerization (Docker) & Cloud Basics
+•	Cross-team Collaboration & Reporting
+
